@@ -2,106 +2,149 @@ import { Component } from '@angular/core';
 import { Product } from './product';
 import { ProductService } from './product-service.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styles: [`
-  :host ::ng-deep .p-dialog .product-image {
-      width: 150px;
-      margin: 0 auto 2rem auto;
-      display: block;
-  }
-`],
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
+  public products: Product[] = [];
+
+  idEditarProduct: any;
+
+  miFormulario: FormGroup;
+
   productDialog: boolean = false;
 
-  products!: Product[];
 
-  product!: Product;
-  
-
-  selectedProducts: Product[] = [];
-
-  submitted!: boolean;
-
-  constructor(private productService: ProductService, private messageService: MessageService, private confirmationService: ConfirmationService) { }
+  constructor(
+    private formBuilder: FormBuilder,
+    private productService: ProductService
+  ) {
+    this.miFormulario = this.formBuilder.group({
+      nombreProducto: ['', Validators.required],
+      description: [''],
+      precio: [''],
+      existencia: [''],
+      tipoProducto: [''],
+    });
+  }
 
   ngOnInit() {
-      this.productService.getProducts().then(data => {
-        console.log(data)
-        this.products = data;
-
-      });
+    this.llenarTabla();
   }
 
-  openNew() {
-      this.product = {};
-      this.submitted = false;
-      this.productDialog = true;
+  llenarTabla() {
+    this.productService.TodosProductos().subscribe({
+      next: (resp) => {
+        console.log(resp);
+        this.products = resp;
+
+      },
+    });
   }
 
+  editProduct(products: any) {
+
+    this.idEditarProduct = products['id'];
 
 
-  editProduct(product: Product) {
-      this.product = {...product};
-      this.productDialog = true;
+    this.miFormulario.patchValue({
+      nombreProducto: products.nombreProducto,
+      description: products.descripcionProducto,
+      precio: products.precio,
+      existencia: products.existencia,
+      tipoProducto: products.tipoProductoId,
+    });
+
+    this.productDialog = true;
   }
 
-  deleteProduct(product: Product) {
-    console.log(product)
-  
-              this.products = this.products.filter(val => val.id !== product.id);
-              this.product = {};
-              this.messageService.add({severity:'success', summary: 'Successful', detail: 'Product Deleted', life: 3000});
-      
+  deleteProduct(products: any) {
+    this.productService.DeleteProducto(products['id']).subscribe({
+      next: (resp) => {
+        this.llenarTabla();
+      },
+    });
   }
 
   hideDialog() {
-      this.productDialog = false;
-      this.submitted = false;
+    this.productDialog = false;
   }
-  
-  saveProduct() {
-      this.submitted = true;
 
-          if (this.product.id) {
-              this.products[this.findIndexById(this.product.id)] = this.product;                
-              this.messageService.add({severity:'success', summary: 'Successful', detail: 'Product Updated', life: 3000});
-          }
-          else {
-              this.product.id = this.createId();
-              this.product.image = 'product-placeholder.svg';
-              this.products.push(this.product);
-              this.messageService.add({severity:'success', summary: 'Successful', detail: 'Product Created', life: 3000});
-          }
+  saveOeditProduct() {
 
-          this.products = [...this.products];
-          this.productDialog = false;
-          this.product = {};
+
+    if(this.idEditarProduct != undefined) {
+        let datosEditProduct: Product = {
+            nombreProducto: this.miFormulario.get('nombreProducto')?.value,
+            descripcionProducto: this.miFormulario.get('description')?.value,
+            precio: this.miFormulario.get('precio')?.value,
+            existencia: this.miFormulario.get('existencia')?.value,
+            tipoProductoId: this.miFormulario.get('tipoProducto')?.value,
+          };
       
+          this.productService
+            .UpdateProducto(this.idEditarProduct, datosEditProduct)
+            .subscribe({
+              next: (resp) => {
+      
+                this.llenarTabla();
+                 
+                Swal.fire({
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Producto actualizado',
+                    showConfirmButton: false,
+                    timer: 1500
+                  })
+                this.productDialog = false;
+
+              },
+            });
+    } else {
+        this.nuevoProduct();
+    }
+
+    
   }
 
-  findIndexById(id: string): number {
-      let index = -1;
-      for (let i = 0; i < this.products.length; i++) {
-          if (this.products[i].id === id) {
-              index = i;
-              break;
-          }
-      }
+  nuevoProduct() {
+    this.productDialog = true;
 
-      return index;
-  }
 
-  createId(): string {
-      let id = '';
-      var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      for ( var i = 0; i < 5; i++ ) {
-          id += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return id;
+    if(this.miFormulario.valid){
+        let nuevoProduct = {
+            nombreProducto: this.miFormulario.get('nombreProducto')?.value,
+            descripcionProducto: this.miFormulario.get('description')?.value,
+            precio: this.miFormulario.get('precio')?.value,
+            existencia: this.miFormulario.get('existencia')?.value,
+            tipoProductoId: this.miFormulario.get('tipoProducto')?.value
+        }
+    
+        this.productService
+        .AgregarProducto(nuevoProduct)
+        .subscribe({
+          next: (resp) => {
+    
+            this.llenarTabla();
+            Swal.fire({
+                position: 'top-end',
+                icon: 'success',
+                title: 'Producto insertado',
+                showConfirmButton: false,
+                timer: 1500
+              })
+            this.productDialog = false;
+
+          },
+        });
+    }
+
+    
+
   }
 }

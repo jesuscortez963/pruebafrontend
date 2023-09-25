@@ -1,14 +1,8 @@
 
 export interface Product {
-    id?:string;
-    code?:string;
-    name?:string;
-    description?:string;
-    price?:number;
-    quantity?:number;
-    inventoryStatus?:string;
-    category?:string;
-    image?:string;
-    rating?:number;
-    otro?:string
+    nombreProducto:string;
+    descripcionProducto:string;
+    precio:number;
+    existencia:number;
+    tipoProductoId:string;
   }

@@ -25,7 +25,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { MessageService } from 'primeng/api';
 import { InputTextareaModule } from 'primeng/inputtextarea';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { ProductService } from './product-service.service';
@@ -59,6 +59,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     InputNumberModule,
     ConfirmDialogModule,
     InputTextareaModule,
+    ReactiveFormsModule
   ],
   providers: [ProductService,MessageService,ConfirmationService],
   bootstrap: [AppComponent]
